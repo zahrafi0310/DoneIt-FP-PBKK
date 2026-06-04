@@ -85,3 +85,38 @@ class StatsSummary(BaseModel):
     approved_count: int
     pending_count: int
     rejected_count: int
+
+class UserRegister(BaseModel):
+    username: str
+    email: str
+    password: str
+
+class UserLogin(BaseModel):
+    username: str
+    password: str
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+class UserResponse(BaseModel):
+    id: int
+    username: str
+    email: str
+    xp: int
+    level: int
+    is_admin: bool
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class AcceptedQuestResponse(BaseModel):
+    id: int
+    quest_id: int
+    accepted_at: datetime
+    is_cancelled: bool
+    quest: QuestResponse          
+
+    class Config:
+        from_attributes = True

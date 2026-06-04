@@ -10,7 +10,7 @@ from auth import get_current_admin
 
 Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="Campus Quest API")
+app = FastAPI(title="DoneIt API")
 
 app.add_middleware(
     CORSMiddleware,
@@ -26,7 +26,7 @@ app.include_router(submissions.router)
 
 @app.get("/")
 def root():
-    return {"message": "Campus Quest API is running!"}
+    return {"message": "DoneIt API is running!"}
 
 @app.get("/admin/stats")
 def get_stats(db: Session = Depends(get_db), current_user = Depends(get_current_admin)):
