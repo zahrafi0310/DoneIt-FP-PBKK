@@ -1,0 +1,6 @@
+backend/DoneIt.db
+.env
+__pycache__/
+*.pyc
+uploads/
+venv/
