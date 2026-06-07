@@ -14,7 +14,7 @@ DIFF_COLOR = {
     "hard":   "#C93638",
 }
 
-LEVEL_NAMES = {0: "Pemula", 1: "Petualang", 2: "Pejuang", 3: "Legenda"}
+LEVEL_NAMES = {1: "Petualang", 2: "Pejuang", 3: "Legenda"}
 
 def inject_global_css():
     st.markdown(f"""
@@ -26,45 +26,37 @@ def inject_global_css():
         font-family: 'Inter', sans-serif;
     }}
 
-    /* Hide streamlit default chrome */
     #MainMenu, footer, header {{ visibility: hidden; }}
     [data-testid="stToolbar"] {{ display: none !important; }}
     .stDeployButton {{ display: none !important; }}
 
-    /* Hide ALL collapse/expand sidebar controls */
     [data-testid="collapsedControl"] {{ display: none !important; }}
     [data-testid="stSidebarCollapseButton"] {{ display: none !important; }}
     button[data-testid="stSidebarCollapseButton"] {{ display: none !important; }}
     [data-testid="stSidebar"] button[kind="header"] {{ display: none !important; }}
     [data-testid="stSidebarNavItems"] {{ display: none !important; }}
 
-    /* Force sidebar always visible and styled */
     [data-testid="stSidebar"] {{
         display: flex !important;
         visibility: visible !important;
         transform: translateX(0) !important;
-        min-width: 220px !important;
-        max-width: 220px !important;
+        min-width: 200px !important;
+        max-width: 200px !important;
         background-color: {TOMATO} !important;
-    }}
-    [data-testid="stSidebar"] > div {{
-        background-color: {TOMATO} !important;
-        width: 220px !important;
     }}
     [data-testid="stSidebarContent"] {{
         background-color: {TOMATO} !important;
+        padding-top: 1rem !important;
     }}
     [data-testid="stSidebar"] section[data-testid="stSidebarContent"] {{
         background-color: {TOMATO} !important;
     }}
-    /* All text inside sidebar */
     [data-testid="stSidebar"] p,
     [data-testid="stSidebar"] span,
     [data-testid="stSidebar"] div,
     [data-testid="stSidebar"] label {{
         color: {HONEYDEW} !important;
     }}
-    /* Sidebar buttons */
     [data-testid="stSidebar"] .stButton > button {{
         background: transparent !important;
         color: {HONEYDEW} !important;
@@ -96,7 +88,6 @@ def inject_global_css():
         display: block;
     }}
 
-    /* Cards */
     .quest-card {{
         background: white;
         border-radius: 14px;
@@ -123,7 +114,6 @@ def inject_global_css():
         color: white;
     }}
 
-    /* Modal box */
     .modal-box {{
         background: white;
         border-radius: 18px;
@@ -131,7 +121,6 @@ def inject_global_css():
         box-shadow: 0 6px 32px rgba(201,54,56,0.10);
     }}
 
-    /* Input fields */
     div[data-testid="stTextInput"] input {{
         border-radius: 10px !important;
         border: 1.5px solid #e8d8d8 !important;
@@ -141,7 +130,6 @@ def inject_global_css():
         box-shadow: 0 0 0 2px rgba(250,133,90,0.18) !important;
     }}
 
-    /* Buttons global */
     .stButton > button {{
         border-radius: 10px !important;
         font-weight: 600 !important;
@@ -156,23 +144,26 @@ def inject_global_css():
         background: {CORAL} !important;
     }}
 
-    /* Tabs */
     .stTabs [data-baseweb="tab-list"] {{
         gap: 0.5rem;
         background: transparent;
+        display: flex !important;
+        width: 100% !important;
     }}
     .stTabs [data-baseweb="tab"] {{
         border-radius: 8px 8px 0 0 !important;
         font-weight: 600;
         color: {TOMATO};
         background: #f9f0f0;
+        flex: 1 1 0 !important;
+        justify-content: center !important;
+        text-align: center !important;
     }}
     .stTabs [aria-selected="true"] {{
         background: {TOMATO} !important;
         color: white !important;
     }}
 
-    /* Stat card */
     .stat-card {{
         background: white;
         border-radius: 14px;
@@ -193,7 +184,6 @@ def inject_global_css():
         margin-top: 0.1rem;
     }}
 
-    /* Admin table */
     .admin-table {{
         width: 100%;
         border-collapse: collapse;
@@ -213,7 +203,6 @@ def inject_global_css():
     }}
     .admin-table tr:hover td {{ background: #fff8f8; }}
 
-    /* XP bar */
     .xp-bar-outer {{
         background: #f0e8e8;
         border-radius: 20px;
@@ -249,8 +238,8 @@ def inject_global_css():
 
 def sidebar_user(current_page: str):
     with st.sidebar:
-        st.markdown(f"<div class='sidebar-logo'>DoneIt</div>", unsafe_allow_html=True)
-        st.markdown(f"<div class='sidebar-tagline'>Complete quests. Earn XP. Level up.</div>", unsafe_allow_html=True)
+        st.markdown("<div class='sidebar-logo'>DoneIt</div>", unsafe_allow_html=True)
+        st.markdown("<div class='sidebar-tagline'>Complete quests. Earn XP. Level up.</div>", unsafe_allow_html=True)
 
         pages = [("Dashboard", "dashboard"), ("Quest Saya", "my_quest"), ("Profil", "profile")]
         for label, key in pages:
@@ -267,8 +256,8 @@ def sidebar_user(current_page: str):
 
 def sidebar_admin(current_page: str):
     with st.sidebar:
-        st.markdown(f"<div class='sidebar-logo'>DoneIt</div>", unsafe_allow_html=True)
-        st.markdown(f"<div class='sidebar-tagline'>Admin Panel</div>", unsafe_allow_html=True)
+        st.markdown("<div class='sidebar-logo'>DoneIt</div>", unsafe_allow_html=True)
+        st.markdown("<div class='sidebar-tagline'>Admin Panel</div>", unsafe_allow_html=True)
 
         pages = [("Dashboard", "admin_dashboard"), ("Review Submission", "admin_review"), ("Statistik", "admin_stats")]
         for label, key in pages:

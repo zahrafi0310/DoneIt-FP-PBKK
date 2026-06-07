@@ -33,9 +33,7 @@ def get_stats(db: Session = Depends(get_db), current_user = Depends(get_current_
     from sqlalchemy import func
     from models import User, Quest, Submission, SubmissionStatus
 
-    active_users = db.query(User).filter(
-        User.submissions.any()
-    ).count()
+    active_users = db.query(User).filter(User.is_admin == False).count()
 
     active_quests = db.query(Quest).filter(
         Quest.is_active == True

@@ -3,7 +3,7 @@ import requests
 from datetime import datetime
 import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-from style import API_BASE, inject_global_css, sidebar_user, TOMATO, CORAL, SKY_BLUE, SOFT_PEACH, DIFF_COLOR
+from style import API_BASE, inject_global_css, sidebar_user, TOMATO, CORAL, DIFF_COLOR
 
 def auth_headers():
     return {"Authorization": f"Bearer {st.session_state.get('token', '')}"}
@@ -15,8 +15,7 @@ def is_expired(quest):
     if not end_date:
         return False
     try:
-        dt = datetime.fromisoformat(end_date)
-        return datetime.now() > dt
+        return datetime.now() > datetime.fromisoformat(end_date)
     except:
         return False
 
@@ -26,9 +25,8 @@ def show():
 
     st.markdown(f"""
     <div style='margin-bottom:1.5rem;'>
-        <span style='font-family:Fredoka,sans-serif; font-size:1.8rem; font-weight:700; color:{TOMATO};'>
-            Quest Saya
-        </span>
+        <span style='font-family:Fredoka,sans-serif; font-size:1.8rem;
+                     font-weight:700; color:{TOMATO};'>Quest Saya</span>
         <div style='color:#666; font-size:0.92rem; margin-top:0.2rem;'>
             Daftar quest yang kamu terima
         </div>
@@ -40,16 +38,33 @@ def show():
         return
 
     try:
-        resp = requests.get(f"{API_BASE}/quests/my", headers=auth_headers(), timeout=8)
+        resp      = requests.get(f"{API_BASE}/quests/my", headers=auth_headers(), timeout=8)
         my_quests = resp.json() if resp.status_code == 200 else []
     except:
         my_quests = []
         st.error("Gagal memuat quest.")
 
+    my_quests = [aq for aq in my_quests if aq.get("quest", {}).get("is_active", True)]
+
+    try:
+        sresp       = requests.get(f"{API_BASE}/submissions/my", headers=auth_headers(), timeout=8)
+        submissions = sresp.json() if sresp.status_code == 200 else []
+        sub_map = {}
+        for s in submissions:
+            qid = s["quest_id"]
+            if qid not in sub_map:
+                sub_map[qid] = s
+            else:
+                existing_time = sub_map[qid]["submitted_at"]
+                if s["submitted_at"] > existing_time:
+                    sub_map[qid] = s
+    except:
+        sub_map = {}
+
     if not my_quests:
-        st.markdown(f"""
-        <div style='background:white; border-radius:14px; padding:2rem; text-align:center;
-                    color:#aaa; border:1.5px solid #f0e8e8;'>
+        st.markdown("""
+        <div style='background:white; border-radius:14px; padding:2rem;
+                    text-align:center; color:#aaa; border:1.5px solid #f0e8e8;'>
             Kamu belum menerima quest apapun.<br>
             <span style='font-size:0.85rem;'>Pergi ke Dashboard untuk browse quest.</span>
         </div>
@@ -57,10 +72,14 @@ def show():
         return
 
     for aq in my_quests:
-        q = aq["quest"]
+        q       = aq["quest"]
         expired = is_expired(q)
         diff    = q.get("difficulty", "easy")
         color   = DIFF_COLOR.get(diff, "#aaa")
+        quest_id = q["id"]
+
+        sub     = sub_map.get(quest_id)
+        sub_status = sub["status"] if sub else None
 
         if q.get("is_limited") and q.get("end_date"):
             try:
@@ -71,20 +90,22 @@ def show():
         else:
             deadline_text = "Permanent"
 
-        card_style = "opacity:0.45; pointer-events:none;" if expired else ""
-        border_col = "#ddd" if expired else "#f0e8e8"
+        border_color = "#ddd" if expired else "#f0e8e8"
+        bg_color     = "#f0f0f0" if expired else "white"
+        title_color  = "#aaa" if expired else "#222"
 
         st.markdown(f"""
-        <div style='background:{"#f0f0f0" if expired else "white"}; border-radius:14px;
-                    padding:1rem 1.2rem; margin-bottom:0.5rem;
-                    border:1.5px solid {border_col};'>
+        <div style='background:{bg_color}; border-radius:14px; padding:1rem 1.2rem;
+                    margin-bottom:0.5rem; border:1.5px solid {border_color};'>
             <div style='display:flex; justify-content:space-between; align-items:center;'>
                 <div>
-                    <span style='font-weight:700; font-size:1rem; color:{"#aaa" if expired else "#222"};'>
+                    <span style='font-weight:700; font-size:1rem; color:{title_color};'>
                         {q["title"]}
                     </span>
                     &nbsp;
-                    <span class='diff-badge' style='background:{"#bbb" if expired else color};'>
+                    <span style='display:inline-block; padding:2px 10px; border-radius:20px;
+                                 font-size:0.75rem; font-weight:600; color:white;
+                                 background:{"#bbb" if expired else color};'>
                         {diff.capitalize()}
                     </span>
                 </div>
@@ -99,30 +120,80 @@ def show():
         </div>
         """, unsafe_allow_html=True)
 
-        if not expired:
+        if expired:
+            st.markdown("<div style='margin-bottom:0.8rem;'></div>", unsafe_allow_html=True)
+            continue
+
+        if sub_status == "pending":
+            st.markdown(f"""
+            <div style='background:#fff8e1; border-radius:10px; padding:0.6rem 1rem;
+                        color:#b8860b; font-size:0.88rem; font-weight:600;
+                        margin-bottom:0.6rem;'>
+                Menunggu review dari admin...
+            </div>
+            """, unsafe_allow_html=True)
+
+        elif sub_status == "approved":
+            st.markdown(f"""
+            <div style='background:#d4f7d4; border-radius:10px; padding:0.6rem 1rem;
+                        color:#276b27; font-size:0.88rem; font-weight:600;
+                        margin-bottom:0.6rem;'>
+                Quest berhasil diselesaikan! +{q["xp_reward"]} XP diperoleh.
+            </div>
+            """, unsafe_allow_html=True)
+            st.markdown("<div style='margin-bottom:0.8rem;'></div>", unsafe_allow_html=True)
+            continue  
+
+        elif sub_status == "rejected":
+            reason = sub.get("rejection_reason", "")
+            st.markdown(f"""
+            <div style='background:#ffd5d5; border-radius:10px; padding:0.6rem 1rem;
+                        color:#8b0000; font-size:0.88rem; font-weight:600;
+                        margin-bottom:0.4rem;'>
+                Submission ditolak.{f" Alasan: {reason}" if reason else ""}
+            </div>
+            """, unsafe_allow_html=True)
             col1, col2 = st.columns([1, 1])
             with col1:
-                if st.button("Submit Quest", key=f"submit_btn_{aq['id']}", type="primary", use_container_width=True):
-                    st.session_state.submit_quest_id  = q["id"]
+                if st.button("Submit Ulang", key=f"resubmit_{aq['id']}", type="primary",
+                             use_container_width=True):
+                    st.session_state.submit_quest_id   = quest_id
                     st.session_state.submit_quest_title = q["title"]
                     st.rerun()
             with col2:
-                if st.button("Batalkan Quest", key=f"cancel_btn_{aq['id']}", use_container_width=True):
-                    try:
-                        r = requests.post(
-                            f"{API_BASE}/quests/{q['id']}/cancel",
-                            headers=auth_headers(), timeout=8
-                        )
-                        if r.status_code == 200:
-                            st.success("Quest dibatalkan.")
-                            st.rerun()
-                        else:
-                            st.error(r.json().get("detail", "Gagal membatalkan."))
-                    except Exception as e:
-                        st.error(f"Error: {e}")
+                if st.button("Batalkan Quest", key=f"cancel_rej_{aq['id']}",
+                             use_container_width=True):
+                    _cancel_quest(quest_id)
             st.markdown("<div style='margin-bottom:0.6rem;'></div>", unsafe_allow_html=True)
+            continue
+
+        col1, col2 = st.columns([1, 1])
+        with col1:
+            if st.button("Submit Quest", key=f"submit_btn_{aq['id']}", type="primary",
+                         use_container_width=True):
+                st.session_state.submit_quest_id   = quest_id
+                st.session_state.submit_quest_title = q["title"]
+                st.rerun()
+        with col2:
+            if st.button("Batalkan Quest", key=f"cancel_btn_{aq['id']}",
+                         use_container_width=True):
+                _cancel_quest(quest_id)
+        st.markdown("<div style='margin-bottom:0.6rem;'></div>", unsafe_allow_html=True)
+
+
+def _cancel_quest(quest_id):
+    try:
+        r = requests.post(
+            f"{API_BASE}/quests/{quest_id}/cancel",
+            headers=auth_headers(), timeout=8
+        )
+        if r.status_code == 200:
+            st.success("Quest dibatalkan.")
+            st.rerun()
         else:
-            st.markdown("<div style='margin-bottom:0.8rem;'></div>", unsafe_allow_html=True)
+            st.error(r.json().get("detail", "Gagal membatalkan."))
+    except Exception as e:
+        st.error(f"Error: {e}")
 
 
 def _show_submit_form():
@@ -131,7 +202,8 @@ def _show_submit_form():
 
     st.markdown(f"""
     <div style='margin-bottom:1.2rem;'>
-        <span style='font-family:Fredoka,sans-serif; font-size:1.4rem; font-weight:700; color:{TOMATO};'>
+        <span style='font-family:Fredoka,sans-serif; font-size:1.4rem;
+                     font-weight:700; color:{TOMATO};'>
             Submit: {quest_title}
         </span>
     </div>
@@ -140,11 +212,19 @@ def _show_submit_form():
     with st.container():
         st.markdown("<div class='modal-box'>", unsafe_allow_html=True)
 
-        photo = st.file_uploader("Foto Bukti", type=["jpg", "jpeg", "png"], key="submit_photo")
-        description = st.text_area("Deskripsi Singkat", placeholder="Ceritakan apa yang kamu lakukan...",
-                                   key="submit_desc", height=120)
+        description = st.text_area(
+            "Deskripsi Singkat",
+            placeholder="Ceritakan apa yang kamu lakukan...",
+            key="submit_desc",
+            height=120
+        )
+        photo = st.file_uploader(
+            "Foto Bukti",
+            type=["jpg", "jpeg", "png"],
+            key="submit_photo"
+        )
 
-        if "submit_error" in st.session_state and st.session_state.submit_error:
+        if st.session_state.get("submit_error"):
             st.markdown(f"""
             <div style='background:#ffd5d5; color:#8b0000; border-radius:10px;
                         padding:0.6rem 1rem; font-size:0.88rem; margin-bottom:0.5rem;'>
@@ -154,7 +234,8 @@ def _show_submit_form():
 
         col1, col2 = st.columns([1, 1])
         with col1:
-            if st.button("Kirim Submission", type="primary", use_container_width=True, key="do_submit"):
+            if st.button("Kirim Submission", type="primary", use_container_width=True,
+                         key="do_submit"):
                 if not photo:
                     st.session_state.submit_error = "Foto bukti wajib diunggah."
                     st.rerun()

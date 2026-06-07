@@ -13,6 +13,24 @@ router = APIRouter(prefix="/submissions", tags=["submissions"])
 UPLOAD_DIR = "../uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
+
+def calculate_level(xp: int) -> int:
+    """
+    Level minimum: 1 (user baru)
+    Level maksimum: 3
+    Threshold:
+      Level 1: 0    – 499 XP
+      Level 2: 500  – 1499 XP
+      Level 3: 1500+ XP
+    """
+    if xp < 500:
+        return 1
+    elif xp < 1500:
+        return 2
+    else:
+        return 3
+
+
 @router.post("/", response_model=SubmissionResponse)
 async def submit_quest(
     quest_id: int = Form(...),
@@ -72,6 +90,7 @@ def get_my_submissions(
         Submission.user_id == current_user.id
     ).order_by(Submission.submitted_at.desc()).all()
 
+
 @router.get("/pending", response_model=list[SubmissionResponse])
 def get_pending_submissions(
     db: Session = Depends(get_db),
@@ -96,35 +115,22 @@ def review_submission(
         raise HTTPException(status_code=400, detail="Submission ini sudah direview")
 
     quest = db.query(Quest).filter(Quest.id == submission.quest_id).first()
-    user = db.query(User).filter(User.id == submission.user_id).first()
+    user  = db.query(User).filter(User.id == submission.user_id).first()
 
-    submission.status = review.status
+    submission.status      = review.status
     submission.reviewed_at = datetime.now()
 
     if review.status == SubmissionStatus.approved:
-        user.xp += quest.xp_reward
+        user.xp   = (user.xp or 0) + quest.xp_reward
         user.level = calculate_level(user.xp)
+        db.flush()   
 
     elif review.status == SubmissionStatus.rejected:
         if not review.rejection_reason:
             raise HTTPException(status_code=400, detail="Alasan penolakan wajib diisi")
         submission.rejection_reason = review.rejection_reason
 
-        if quest.is_limited and quest.end_date and datetime.now() > quest.end_date:
-            xp_penalty = quest.xp_reward // 2
-            user.xp = max(0, user.xp - xp_penalty)
-            user.level = calculate_level(user.xp)
-
     db.commit()
+    db.refresh(user)        
     db.refresh(submission)
     return submission
-
-def calculate_level(xp: int) -> int:
-    if xp < 300:
-        return 0
-    elif xp < 900:   
-        return 1
-    elif xp < 1800:  
-        return 2
-    else:
-        return 3
