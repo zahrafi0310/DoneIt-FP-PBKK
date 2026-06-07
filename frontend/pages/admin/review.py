@@ -36,6 +36,19 @@ def show():
     except:
         quests = {}
 
+    user_ids = list({sub["user_id"] for sub in submissions})
+    users = {}
+    for uid in user_ids:
+        try:
+            uresp = requests.get(f"{API_BASE}/auth/users/{uid}", headers=auth_headers(), timeout=8)
+            if uresp.status_code == 200:
+                u = uresp.json()
+                users[uid] = u.get("username", f"User #{uid}")
+            else:
+                users[uid] = f"User #{uid}"
+        except:
+            users[uid] = f"User #{uid}"
+
     if not submissions:
         st.markdown(f"""
         <div style='background:white; border-radius:14px; padding:2rem; text-align:center;
@@ -46,16 +59,17 @@ def show():
         return
 
     for sub in submissions:
-        q_info  = quests.get(sub["quest_id"], {})
-        q_title = q_info.get("title", f"Quest #{sub['quest_id']}")
-        q_xp    = q_info.get("xp_reward", "?")
+        q_info   = quests.get(sub["quest_id"], {})
+        q_title  = q_info.get("title", f"Quest #{sub['quest_id']}")
+        q_xp     = q_info.get("xp_reward", "?")
+        username = users.get(sub["user_id"], f"User #{sub['user_id']}")
 
         try:
             sub_time = datetime.fromisoformat(sub["submitted_at"]).strftime("%d %b %Y, %H:%M")
         except:
             sub_time = sub["submitted_at"]
 
-        with st.expander(f"Submission #{sub['id']} — Quest: {q_title} — User #{sub['user_id']}", expanded=False):
+        with st.expander(f"Submission #{sub['id']} — Quest: {q_title} — {username}", expanded=False):
             col_info, col_photo = st.columns([1.4, 1])
 
             with col_info:
@@ -63,6 +77,10 @@ def show():
                 <div style='margin-bottom:0.8rem;'>
                     <div style='font-size:0.8rem; color:#aaa; margin-bottom:0.2rem;'>Quest</div>
                     <div style='font-weight:700; color:#222;'>{q_title}</div>
+                </div>
+                <div style='margin-bottom:0.8rem;'>
+                    <div style='font-size:0.8rem; color:#aaa; margin-bottom:0.2rem;'>Submitted by</div>
+                    <div style='font-weight:600; color:#444;'>{username}</div>
                 </div>
                 <div style='margin-bottom:0.8rem;'>
                     <div style='font-size:0.8rem; color:#aaa; margin-bottom:0.2rem;'>XP Reward</div>

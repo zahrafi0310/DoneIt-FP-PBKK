@@ -7,18 +7,29 @@ from style import API_BASE, inject_global_css, TOMATO, CORAL, SOFT_PEACH, HONEYD
 def show():
     inject_global_css()
 
+    st.markdown("""
+    <style>
+    div[data-testid="column"]:nth-child(2) > div > div > div {
+        background: white;
+        border-radius: 18px;
+        padding: 2rem;
+        box-shadow: 0 6px 32px rgba(201,54,56,0.10);
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
     left, right = st.columns([1, 1])
 
     with left:
         st.markdown(f"""
-        <div style='display:flex; flex-direction:column; justify-content:center;
-                    height:100%; padding: 4rem 2rem 2rem 2rem; text-align:left;'>
-            <div style='font-family:Fredoka,sans-serif; font-size:4rem; font-weight:700;
-                        color:{TOMATO}; line-height:1;'>DoneIt</div>
-            <div style='color:{CORAL}; font-size:1.05rem; font-weight:600; margin-top:0.6rem;'>
+        <div style="display:flex; flex-direction:column; justify-content:center;
+                    height:100%; padding:4rem 2rem 2rem 2rem; text-align:left;">
+            <div style="font-family:Fredoka,sans-serif; font-size:4rem; font-weight:700;
+                        color:{TOMATO}; line-height:1;">DoneIt</div>
+            <div style="color:{CORAL}; font-size:1.05rem; font-weight:600; margin-top:0.6rem;">
                 Complete quests. Earn XP. Level up.
             </div>
-            <div style='margin-top:1.5rem; color:#666; font-size:0.92rem; line-height:1.7;'>
+            <div style="margin-top:1.5rem; color:#666; font-size:0.92rem; line-height:1.7;">
                 Buat akunmu sekarang.<br>
                 Bergabung dan mulai selesaikan<br>
                 quest pertamamu hari ini.
@@ -27,13 +38,10 @@ def show():
         """, unsafe_allow_html=True)
 
     with right:
-        st.markdown("<div style='padding: 2.5rem 1rem 1rem 1rem;'>", unsafe_allow_html=True)
-        st.markdown("<div class='modal-box'>", unsafe_allow_html=True)
-
         st.markdown(f"""
-        <p style='font-family:Fredoka,sans-serif; font-size:1.6rem; font-weight:700;
-                  color:{TOMATO}; margin-bottom:0.2rem;'>Buat Akun</p>
-        <p style='color:#888; font-size:0.88rem; margin-bottom:1.2rem;'>Daftar dan mulai petualanganmu</p>
+        <p style="font-family:Fredoka,sans-serif; font-size:1.6rem; font-weight:700;
+                  color:{TOMATO}; margin-bottom:0.2rem;">Buat Akun</p>
+        <p style="color:#888; font-size:0.88rem; margin-bottom:1.2rem;">Daftar dan mulai petualanganmu</p>
         """, unsafe_allow_html=True)
 
         username = st.text_input("Username", placeholder="Pilih username unik kamu", key="reg_username")
@@ -41,18 +49,18 @@ def show():
         password = st.text_input("Password", placeholder="Min. 6 karakter",
                                  type="password", key="reg_password")
 
-        if "reg_error" in st.session_state and st.session_state.reg_error:
+        if st.session_state.get("reg_error"):
             st.markdown(f"""
-            <div style='background:#ffd5d5; color:#8b0000; border-radius:10px;
-                        padding:0.6rem 1rem; font-size:0.88rem; margin-bottom:0.5rem;'>
+            <div style="background:#ffd5d5; color:#8b0000; border-radius:10px;
+                        padding:0.6rem 1rem; font-size:0.88rem; margin-bottom:0.5rem;">
                 {st.session_state.reg_error}
             </div>
             """, unsafe_allow_html=True)
 
-        if "reg_success" in st.session_state and st.session_state.reg_success:
+        if st.session_state.get("reg_success"):
             st.markdown("""
-            <div style='background:#d4f7d4; color:#276b27; border-radius:10px;
-                        padding:0.6rem 1rem; font-size:0.88rem; margin-bottom:0.5rem;'>
+            <div style="background:#d4f7d4; color:#276b27; border-radius:10px;
+                        padding:0.6rem 1rem; font-size:0.88rem; margin-bottom:0.5rem;">
                 Registrasi berhasil! Mengarahkan ke dashboard...
             </div>
             """, unsafe_allow_html=True)
@@ -93,8 +101,7 @@ def show():
                             st.session_state.page = "dashboard"
                             st.rerun()
                     else:
-                        err = resp.json().get("detail", "Registrasi gagal.")
-                        st.session_state.reg_error = err
+                        st.session_state.reg_error = resp.json().get("detail", "Registrasi gagal.")
                         st.session_state.reg_success = False
                         st.rerun()
                 except Exception as e:
@@ -103,7 +110,7 @@ def show():
                     st.rerun()
 
         st.markdown(f"""
-        <div style='text-align:center; margin-top:1.2rem; font-size:0.88rem; color:#888;'>
+        <div style="text-align:center; margin-top:1.2rem; font-size:0.88rem; color:#888;">
             Sudah punya akun?
         </div>
         """, unsafe_allow_html=True)
@@ -113,6 +120,3 @@ def show():
             st.session_state.reg_error = ""
             st.session_state.reg_success = False
             st.rerun()
-
-        st.markdown("</div>", unsafe_allow_html=True)
-        st.markdown("</div>", unsafe_allow_html=True)

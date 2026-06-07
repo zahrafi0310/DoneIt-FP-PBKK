@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from sqlalchemy.orm import Session
+from sqlalchemy import text
 from database import get_db
 from models import Submission, Quest, User, AcceptedQuest, SubmissionStatus
 from schemas import SubmissionResponse, SubmissionReview
@@ -15,14 +16,6 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 
 def calculate_level(xp: int) -> int:
-    """
-    Level minimum: 1 (user baru)
-    Level maksimum: 3
-    Threshold:
-      Level 1: 0    – 499 XP
-      Level 2: 500  – 1499 XP
-      Level 3: 1500+ XP
-    """
     if xp < 500:
         return 1
     elif xp < 1500:
@@ -115,15 +108,27 @@ def review_submission(
         raise HTTPException(status_code=400, detail="Submission ini sudah direview")
 
     quest = db.query(Quest).filter(Quest.id == submission.quest_id).first()
-    user  = db.query(User).filter(User.id == submission.user_id).first()
 
     submission.status      = review.status
     submission.reviewed_at = datetime.now()
 
     if review.status == SubmissionStatus.approved:
-        user.xp   = (user.xp or 0) + quest.xp_reward
-        user.level = calculate_level(user.xp)
-        db.flush()   
+        if not review.rejection_reason:
+            pass 
+
+        current_xp_row = db.execute(
+            text("SELECT xp FROM users WHERE id = :uid"),
+            {"uid": submission.user_id}
+        ).fetchone()
+
+        current_xp = (current_xp_row[0] or 0) if current_xp_row else 0
+        new_xp     = current_xp + quest.xp_reward
+        new_level  = calculate_level(new_xp)
+
+        db.execute(
+            text("UPDATE users SET xp = :xp, level = :level WHERE id = :uid"),
+            {"xp": new_xp, "level": new_level, "uid": submission.user_id}
+        )
 
     elif review.status == SubmissionStatus.rejected:
         if not review.rejection_reason:
@@ -131,6 +136,5 @@ def review_submission(
         submission.rejection_reason = review.rejection_reason
 
     db.commit()
-    db.refresh(user)        
     db.refresh(submission)
     return submission

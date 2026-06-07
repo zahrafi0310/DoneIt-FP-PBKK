@@ -98,12 +98,6 @@ def inject_global_css():
         transition: box-shadow 0.15s;
     }}
     .quest-card:hover {{ box-shadow: 0 4px 18px rgba(201,54,56,0.10); }}
-    .quest-card.disabled {{
-        background: #e8e8e8;
-        color: #aaa;
-        cursor: not-allowed;
-        border: 1.5px solid #ddd;
-    }}
 
     .diff-badge {{
         display: inline-block;
@@ -114,11 +108,21 @@ def inject_global_css():
         color: white;
     }}
 
+    /* modal-box as a real CSS class — only works when rendered inside one st.markdown block */
     .modal-box {{
         background: white;
         border-radius: 18px;
         padding: 2rem;
         box-shadow: 0 6px 32px rgba(201,54,56,0.10);
+    }}
+
+    /* Style st.container() bordered as card — used instead of manual modal-box divs */
+    [data-testid="stVerticalBlockBorderWrapper"] > div:first-child {{
+        background: white !important;
+        border-radius: 18px !important;
+        padding: 1.5rem 2rem !important;
+        box-shadow: 0 6px 32px rgba(201,54,56,0.10) !important;
+        border: none !important;
     }}
 
     div[data-testid="stTextInput"] input {{
@@ -217,16 +221,6 @@ def inject_global_css():
         background: linear-gradient(90deg, {CORAL}, {TOMATO});
         transition: width 0.5s;
     }}
-
-    .submission-card {{
-        background: white;
-        border-radius: 14px;
-        padding: 1.1rem 1.3rem;
-        margin-bottom: 0.8rem;
-        border: 1.5px solid #f0e8e8;
-    }}
-    .submission-card.approved {{ border-color: #62C4DA; }}
-    .submission-card.rejected {{ border-color: #FA855A; }}
 
     div[data-testid="stExpander"] {{
         border-radius: 12px !important;

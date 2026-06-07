@@ -33,13 +33,13 @@ def show():
     inject_global_css()
     sidebar_user("profile")
 
-    user = st.session_state.get("user", {})
+    # Always fetch fresh data from API
     try:
         me = requests.get(f"{API_BASE}/auth/me", headers=auth_headers(), timeout=8).json()
-        user = me
         st.session_state.user = me
+        user = me
     except:
-        pass
+        user = st.session_state.get("user", {})
 
     xp         = user.get("xp") or 0
     level      = calculate_level(xp)
@@ -48,65 +48,61 @@ def show():
     next_level = min(level + 1, 3)
 
     st.markdown(f"""
-    <div style='margin-bottom:1.5rem;'>
-        <span style='font-family:Fredoka,sans-serif; font-size:1.8rem;
-                     font-weight:700; color:{TOMATO};'>Profil</span>
+    <div style="margin-bottom:1.5rem;">
+        <span style="font-family:Fredoka,sans-serif; font-size:1.8rem; font-weight:700; color:{TOMATO};">Profil</span>
     </div>
     """, unsafe_allow_html=True)
 
     initial = (user.get("username") or "?")[0].upper()
+    username_display = user.get("username", "")
+    email_display    = user.get("email", "")
+
     st.markdown(f"""
-    <div class='modal-box' style='margin-bottom:1.5rem;'>
-        <div style='display:flex; align-items:center; gap:1.5rem; flex-wrap:wrap;'>
-            <div style='width:70px; height:70px; border-radius:50%;
+    <div class="modal-box" style="margin-bottom:1.5rem;">
+        <div style="display:flex; align-items:center; gap:1.5rem; flex-wrap:wrap;">
+            <div style="width:70px; height:70px; border-radius:50%;
                         background:linear-gradient(135deg,{CORAL},{TOMATO});
                         display:flex; align-items:center; justify-content:center;
                         font-family:Fredoka,sans-serif; font-size:2rem;
-                        font-weight:700; color:white;'>
+                        font-weight:700; color:white;">
                 {initial}
             </div>
-            <div style='flex:1;'>
-                <div style='font-family:Fredoka,sans-serif; font-size:1.4rem;
-                            font-weight:700; color:#222;'>{user.get("username","")}</div>
-                <div style='font-size:0.85rem; color:#888;'>{user.get("email","")}</div>
-                <div style='margin-top:0.3rem;'>
-                    <span style='background:{TOMATO}; color:white; border-radius:20px;
-                                 padding:2px 12px; font-size:0.8rem; font-weight:600;'>
+            <div style="flex:1;">
+                <div style="font-family:Fredoka,sans-serif; font-size:1.4rem; font-weight:700; color:#222;">{username_display}</div>
+                <div style="font-size:0.85rem; color:#888;">{email_display}</div>
+                <div style="margin-top:0.3rem;">
+                    <span style="background:{TOMATO}; color:white; border-radius:20px;
+                                 padding:2px 12px; font-size:0.8rem; font-weight:600;">
                         Level {level} - {level_name}
                     </span>
                 </div>
             </div>
-            <div style='text-align:right;'>
-                <div style='font-family:Fredoka,sans-serif; font-size:2.2rem;
-                            font-weight:700; color:{TOMATO};'>{xp}</div>
-                <div style='font-size:0.78rem; color:#aaa;'>Total XP</div>
+            <div style="text-align:right;">
+                <div style="font-family:Fredoka,sans-serif; font-size:2.2rem; font-weight:700; color:{TOMATO};">{xp}</div>
+                <div style="font-size:0.78rem; color:#aaa;">Total XP</div>
             </div>
         </div>
     </div>
     """, unsafe_allow_html=True)
 
-    coral_color = CORAL
-    tomato_color = TOMATO
     progress_label = f"Progress ke Level {next_level}" if level < 3 else "Level Maksimum Tercapai"
     st.markdown(f"""
-    <div style='background:white; border-radius:18px; padding:1.2rem 2rem;
-                box-shadow:0 6px 32px rgba(201,54,56,0.10); margin-bottom:1.5rem;'>
-        <div style='display:flex; justify-content:space-between;
-                    font-size:0.8rem; color:#888; margin-bottom:6px;'>
+    <div style="background:white; border-radius:18px; padding:1.2rem 2rem;
+                box-shadow:0 6px 32px rgba(201,54,56,0.10); margin-bottom:1.5rem;">
+        <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:#888; margin-bottom:6px;">
             <span>{progress_label}</span>
             <span>{progress}%</span>
         </div>
-        <div style='background:#f0e8e8; border-radius:20px; height:12px;
-                    width:100%; overflow:hidden;'>
-            <div style='width:{progress}%; height:100%; border-radius:20px;
-                        background:linear-gradient(90deg,{coral_color},{tomato_color});'></div>
+        <div style="background:#f0e8e8; border-radius:20px; height:12px; width:100%; overflow:hidden;">
+            <div style="width:{progress}%; height:100%; border-radius:20px;
+                        background:linear-gradient(90deg,{CORAL},{TOMATO});"></div>
         </div>
     </div>
     """, unsafe_allow_html=True)
 
     st.markdown(f"""
-    <div style='font-family:Fredoka,sans-serif; font-size:1.2rem; font-weight:700;
-                color:{TOMATO}; margin-bottom:0.8rem;'>Riwayat Submission</div>
+    <div style="font-family:Fredoka,sans-serif; font-size:1.2rem; font-weight:700;
+                color:{TOMATO}; margin-bottom:0.8rem;">Riwayat Submission</div>
     """, unsafe_allow_html=True)
 
     try:
@@ -123,28 +119,22 @@ def show():
 
     if not submissions:
         st.markdown("""
-        <div style='background:white; border-radius:14px; padding:1.5rem;
-                    text-align:center; color:#aaa; border:1.5px solid #f0e8e8;'>
+        <div style="background:white; border-radius:14px; padding:1.5rem;
+                    text-align:center; color:#aaa; border:1.5px solid #f0e8e8;">
             Belum ada submission.
         </div>
         """, unsafe_allow_html=True)
         return
 
-    status_cfg = {
-        "approved": ("#d4f7d4", "#276b27", "Disetujui"),
-        "pending":  ("#fff8e1", "#b8860b", "Menunggu Review"),
-        "rejected": ("#ffd5d5", "#8b0000", "Ditolak"),
-    }
-    border_cfg = {
-        "approved": "#62C4DA",
-        "pending":  "#f0e8e8",
-        "rejected": "#FA855A",
+    STATUS_CFG = {
+        "approved": {"bg": "#d4f7d4", "fg": "#276b27", "label": "Disetujui",       "border": "#62C4DA"},
+        "pending":  {"bg": "#fff8e1", "fg": "#b8860b", "label": "Menunggu Review",  "border": "#f0e8e8"},
+        "rejected": {"bg": "#ffd5d5", "fg": "#8b0000", "label": "Ditolak",          "border": "#FA855A"},
     }
 
     for sub in submissions:
-        status  = sub.get("status", "pending")
-        bg, fg, label = status_cfg.get(status, ("#eee", "#666", status.capitalize()))
-        border  = border_cfg.get(status, "#f0e8e8")
+        status = sub.get("status", "pending")
+        cfg    = STATUS_CFG.get(status, {"bg": "#eee", "fg": "#666", "label": status.capitalize(), "border": "#f0e8e8"})
 
         q_info  = quests.get(sub["quest_id"], {})
         q_title = q_info.get("title") or f"Quest #{sub['quest_id']}"
@@ -155,38 +145,34 @@ def show():
         except:
             sub_time = sub["submitted_at"]
 
-        xp_display = f"+{q_xp} XP" if status == "approved" else ("? XP" if status == "pending" else "0 XP")
+        xp_text = f"+{q_xp} XP" if status == "approved" else ("? XP" if status == "pending" else "0 XP")
 
-        st.markdown(f"""
-        <div style='background:white; border-radius:14px; padding:1.1rem 1.3rem;
-                    margin-bottom:0.8rem; border:1.5px solid {border};'>
-            <div style='display:flex; justify-content:space-between; align-items:flex-start;'>
-                <div style='flex:1;'>
-                    <div style='font-weight:700; font-size:0.98rem; color:#222;'>{q_title}</div>
-                    <div style='font-size:0.78rem; color:#aaa; margin-top:0.2rem;'>{sub_time}</div>
-        """, unsafe_allow_html=True)
-
+        rejection_block = ""
         if status == "rejected" and sub.get("rejection_reason"):
-            reason = sub["rejection_reason"]
-            st.markdown(f"""
-            <div style='margin-top:0.4rem; font-size:0.8rem; color:#8b0000;
-                        background:#fff0f0; border-radius:6px; padding:0.4rem 0.7rem;'>
-                Alasan: {reason}
-            </div>
-            """, unsafe_allow_html=True)
+            r = sub["rejection_reason"]
+            rejection_block = (
+                "<div style=\"margin-top:0.4rem; font-size:0.8rem; color:#8b0000;"
+                " background:#fff0f0; border-radius:6px; padding:0.4rem 0.7rem;\">"
+                f"Alasan: {r}</div>"
+            )
 
-        st.markdown(f"""
-                </div>
-                <div style='text-align:right; margin-left:1rem;'>
-                    <span style='background:{bg}; color:{fg}; border-radius:20px;
-                                 padding:3px 12px; font-size:0.78rem; font-weight:600;'>
-                        {label}
-                    </span>
-                    <div style='font-family:Fredoka,sans-serif; font-size:1.1rem;
-                                font-weight:700; color:{TOMATO}; margin-top:0.3rem;'>
-                        {xp_display}
-                    </div>
-                </div>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+        card_html = (
+            f"<div style=\"background:white; border-radius:14px; padding:1.1rem 1.3rem;"
+            f" margin-bottom:0.8rem; border:1.5px solid {cfg['border']};\">"
+            f"  <div style=\"display:flex; justify-content:space-between; align-items:flex-start;\">"
+            f"    <div style=\"flex:1;\">"
+            f"      <div style=\"font-weight:700; font-size:0.98rem; color:#222;\">{q_title}</div>"
+            f"      <div style=\"font-size:0.78rem; color:#aaa; margin-top:0.2rem;\">{sub_time}</div>"
+            f"      {rejection_block}"
+            f"    </div>"
+            f"    <div style=\"text-align:right; margin-left:1rem;\">"
+            f"      <span style=\"background:{cfg['bg']}; color:{cfg['fg']}; border-radius:20px;"
+            f"               padding:3px 12px; font-size:0.78rem; font-weight:600;\">{cfg['label']}</span>"
+            f"      <div style=\"font-family:Fredoka,sans-serif; font-size:1.1rem;"
+            f"                  font-weight:700; color:{TOMATO}; margin-top:0.3rem;\">{xp_text}</div>"
+            f"    </div>"
+            f"  </div>"
+            f"</div>"
+        )
+
+        st.markdown(card_html, unsafe_allow_html=True)
